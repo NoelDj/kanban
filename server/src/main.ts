@@ -4,6 +4,7 @@ import kanbanBoardRoutes from './routes/kanbanBoardRoutes.ts'
 import { initializeORM } from './bootstrap.ts'
 import { MikroORM, RequestContext } from "@mikro-orm/core"
 import envConfig from "../envConfig"
+import authRoutes from './routes/authRoute.ts'
 
 
 const app = Fastify({ logger: false })
@@ -14,7 +15,9 @@ declare module 'fastify' {
   }
 }
 
+
 (async () => {
+    const base = 'api'
     
     try {
         console.log()
@@ -27,7 +30,8 @@ declare module 'fastify' {
         })
         
         
-        app.register(kanbanBoardRoutes, { prefix: '/api/boards' })
+        app.register(kanbanBoardRoutes, { prefix: base + '/boards' })
+        app.register(authRoutes, { prefix: base + '/auth' })
         
         const {port} = envConfig
         await app.listen({ port })

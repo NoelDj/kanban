@@ -13,7 +13,7 @@ export async function getKanbanBoards(request: FastifyRequest, reply: FastifyRep
 export async function createKanbanBoard(request: FastifyRequest, reply: FastifyReply): Promise<void> {
     const em = request.di.orm.em.fork()
     const { title, description } = request.body as Partial<KanbanBoard>
-    console.log(title, description)
+
     if (!title || !description) {
         reply.code(400).send({msg: 'Provide input'})
     }

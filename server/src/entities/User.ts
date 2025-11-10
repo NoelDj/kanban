@@ -1,7 +1,8 @@
-import { Collection, Entity, OneToMany, PrimaryKey, Property } from '@mikro-orm/core';
+import { Collection, Entity, OneToMany, PrimaryKey, Property, Unique } from '@mikro-orm/core';
 import { KanbanBoard } from './KanbanBoard';
 
 @Entity()
+@Unique({ properties: ['email'] })
 export class User {
 
     @PrimaryKey()
@@ -14,6 +15,7 @@ export class User {
     updatedAt = new Date();
 
     @Property()
+    @Unique()
     email!: string;
 
     @Property()
