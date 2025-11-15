@@ -16,6 +16,6 @@ export class KanbanTask {
    @Property()
    position!: number;
 
-   @ManyToOne(() => KanbanColumn)
+   @ManyToOne(() => KanbanColumn, {deleteRule: 'cascade'})
    kanbanColumn!: KanbanColumn;
 }

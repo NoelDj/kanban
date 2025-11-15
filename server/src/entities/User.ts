@@ -19,7 +19,10 @@ export class User {
     email!: string;
 
     @Property()
-    password!: string;
+    password: string;
+
+    @Property()
+    salt: string;
 
     @OneToMany(() => KanbanBoard, kanbanBoard => kanbanBoard.user)
     kanbanBoards = new Collection<KanbanBoard>(this)

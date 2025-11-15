@@ -1,24 +1,25 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { KanbanBoard } from '../entities/KanbanBoard'
+import { KanbanColumn } from '../entities/KanbanColumn'
 
 
 export async function getKanbanBoards(request: FastifyRequest, reply: FastifyReply): Promise<void> { 
     const em = request.di.orm.em.fork()
 
-    const kananBoards = await em.find(KanbanBoard, {})
+    const kananBoards = await em.find(KanbanBoard, {user: request.user.id})
 
     reply.send(kananBoards)
 }
 
 export async function createKanbanBoard(request: FastifyRequest, reply: FastifyReply): Promise<void> {
     const em = request.di.orm.em.fork()
-    const { title, description } = request.body as Partial<KanbanBoard>
+    const { title, description } = request.body as Partial<KanbanBoard> || {} 
 
     if (!title || !description) {
         reply.code(400).send({msg: 'Provide input'})
     }
 
-    const kanbanBoard = em.create(KanbanBoard, { title, description })
+    const kanbanBoard = em.create(KanbanBoard, { title, description, user: request.user.id })
     await em.persistAndFlush(kanbanBoard)
 
     reply.code(201).send(kanbanBoard)
@@ -27,15 +28,21 @@ export async function createKanbanBoard(request: FastifyRequest, reply: FastifyR
 export async function getKanbanBoard(request: FastifyRequest, reply: FastifyReply): Promise<void> {
     const em = request.di.orm.em.fork()
     
-    const { id } = request.params as { id: number }
+    const { id } = request.params as { id: number } || null
 
     const kanbanBoard = await em.findOne(KanbanBoard, { id })
-    
-    if (!kanbanBoard) {
+
+    if (!kanbanBoard || kanbanBoard.user?.id !== request.user.id) {
         return reply.code(404).send({ error: 'Board not found' })
     }
 
-    reply.send(kanbanBoard)
+    const kanbanColumns = await em.find(KanbanColumn, {kanbanBoard: id})
+
+    kanbanBoard["kanbanColumns"] = kanbanColumns
+
+    reply.send({
+        kanbanBoard
+    })
 }
 
 export async function deleteKanbanBoard(request: FastifyRequest, reply: FastifyReply): Promise<void> {
@@ -44,7 +51,7 @@ export async function deleteKanbanBoard(request: FastifyRequest, reply: FastifyR
     const { id } = request.params as { id: number }
 
     const kanbanBoard = await em.findOne(KanbanBoard, { id })
-
+    console.log(kanbanBoard)
     if (!kanbanBoard) {
         return reply.code(404).send({ error: 'Board not found' })
     }

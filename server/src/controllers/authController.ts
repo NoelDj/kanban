@@ -1,5 +1,9 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { User } from '../entities/User'
+import jwt from 'jsonwebtoken'
+import envConfig from '../../envConfig'
+import { hashPassword, verifyPassword } from '../utils/auth'
+import { compareArrays } from '@mikro-orm/core'
 
 export async function registerUser(request: FastifyRequest, reply: FastifyReply): Promise<void> { 
     const em = request.di.orm.em.fork()
@@ -17,9 +21,16 @@ export async function registerUser(request: FastifyRequest, reply: FastifyReply)
         reply.code(409).send({msg: 'User already exists'})
     }
 
-    const user = em.create(User, { password, email })
+    const {salt, hash} = hashPassword(password)
+
+    const user = em.create(User, {
+        password: hash,
+        email,
+        salt
+    })
+
     await em.persistAndFlush(user)
-    const {password: _p, ...userData} = user
+    const {password: _p, salt: _s, ...userData} = user
 
     reply.code(201).send(userData)
 }
@@ -32,17 +43,19 @@ export async function loginUser(request: FastifyRequest, reply: FastifyReply): P
         reply.code(400).send({err: 'provide password or email'})
     }
 
-    const existingUser = await em.findOne(User, {
+    const user = await em.findOne(User, {
         email
     })
 
-    if (!existingUser) {
+    if (!user || !verifyPassword(password, user.salt, user.password)) {
         reply.code(400).send({err: 'wrong credentials'})
     }
 
-    if (existingUser.password !== password) {
-        reply.code(400).send({err: 'wrong credentials'})
-    }
+    const token = jwt.sign({
+        user: {
+            id: user.id
+        }
+    }, envConfig.jwtKey, { expiresIn: '24h' })
 
-    reply.code(200).send({msg: 'logged in'})
+    reply.code(200).send({msg: 'logged in', token})
 }

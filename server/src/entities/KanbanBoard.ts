@@ -1,4 +1,4 @@
-import { Entity, ManyToOne, OneToMany, PrimaryKey, Property, Collection } from '@mikro-orm/core';
+import { Entity, ManyToOne, OneToMany, PrimaryKey, Property, Collection, Cascade } from '@mikro-orm/core';
 import { User } from './User';
 import { KanbanColumn } from './KanbanColumn';
 
@@ -17,6 +17,6 @@ export class KanbanBoard {
     @ManyToOne(() => User, { nullable: true })
     user?: User;
 
-    @OneToMany(() => KanbanColumn, kanbanColumn => kanbanColumn.kanbanBoard)
+    @OneToMany(() => KanbanColumn, kanbanColumn => kanbanColumn.kanbanBoard, {cascade: [Cascade.REMOVE]})
     kanbanColumns = new Collection<KanbanColumn>(this)
 }
